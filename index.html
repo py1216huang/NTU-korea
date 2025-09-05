@@ -12,7 +12,14 @@
         .source-selection button { margin: 5px; padding: 10px 15px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; background-color: #f8f8f8; transition: background-color 0.3s; }
         .source-selection button.active, .source-selection button:hover { background-color: #e0e0e0; }
         #loading-message { margin-bottom: 20px; font-style: italic; color: #666; }
-        #form-image-display { margin: 20px 0; max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; }
+        #form-image-display { 
+            margin: 20px auto; /* 關鍵：設置上下邊距並左右自動，實現水平置中 */
+            display: block; /* 關鍵：將圖片設為區塊元素，才能應用 auto 邊距 */
+            max-width: 100%; 
+            height: auto; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
         .controls { margin-top: 20px; }
         .controls input { width: 60px; text-align: center; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
         #update-btn { margin: 15px 0; padding: 10px 20px; font-size: 16px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; }
