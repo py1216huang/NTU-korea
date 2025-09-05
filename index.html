@@ -12,9 +12,11 @@
         .source-selection button { margin: 5px; padding: 10px 15px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; background-color: #f8f8f8; transition: background-color 0.3s; }
         .source-selection button.active, .source-selection button:hover { background-color: #e0e0e0; }
         #loading-message { margin-bottom: 20px; font-style: italic; color: #666; }
-        #form-image-display { margin: 20px 0; max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; /* 預設隱藏 */ }
+        #form-image-display { margin: 20px 0; max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; }
         .controls { margin-top: 20px; }
         .controls input { width: 60px; text-align: center; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        #update-btn { margin: 15px 0; padding: 10px 20px; font-size: 16px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; }
+        #update-btn:hover { background-color: #0056b3; }
         #start-btn { margin-top: 20px; padding: 15px 30px; font-size: 18px; background-color: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; }
         #start-btn:hover { background-color: #218838; }
         #result-container { margin-top: 30px; }
@@ -31,7 +33,7 @@
 <body>
     <div class="container">
         <h1>Google 表單抽籤工具</h1>
-        <p>請選擇要匯入的表單來源：</p>
+        <p>請先選擇要匯入的表單來源：</p>
         <div class="source-selection">
             <button data-source="form1">表單一</button>
             <button data-source="form2">表單二</button>
@@ -39,6 +41,8 @@
             <button data-source="form4">表單四</button>
         </div>
         <img id="form-image-display" src="" alt="請選擇表單以顯示相關圖片">
+        
+        <button id="update-btn" disabled>更新名單</button>
 
         <div id="loading-message"></div>
         <div id="participant-list">
@@ -48,7 +52,7 @@
         <div class="controls">
             <label for="draw-count">抽獎人數：</label>
             <input type="number" id="draw-count" value="1" min="1">
-            <button id="start-btn">開始抽籤！</button>
+            <button id="start-btn" disabled>開始抽籤！</button>
         </div>
         <div id="result-container">
             <h2>中獎名單</h2>
@@ -58,6 +62,7 @@
 
     <script>
         const sourceButtons = document.querySelectorAll('.source-selection button');
+        const updateBtn = document.getElementById('update-btn');
         const formImageDisplay = document.getElementById('form-image-display');
         const drawCountInput = document.getElementById('draw-count');
         const startBtn = document.getElementById('start-btn');
@@ -66,8 +71,8 @@
         const loadingMessage = document.getElementById('loading-message');
         const resultsDiv = document.getElementById('results');
         let participants = [];
+        let selectedUrl = null;
 
-        // 這裡請替換成你自己的四個 Google 表單 CSV 連結
         const googleSheetUrls = {
             form1: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQcOh25VlJgrp2OXdTw56-WIQG-09GnA4gq6wn46SLCqn_hxYx_I4wXGIvdeJk0WkLYlOjmWSZtM3v6/pub?output=csv',
             form2: 'https://docs.google.com/spreadsheets/d/e/2PACX-1v.../pub?output=csv', // 替換成你的第二份表單連結
@@ -75,20 +80,17 @@
             form4: 'https://docs.google.com/spreadsheets/d/e/2PACX-1v.../pub?output=csv'  // 替換成你的第四份表單連結
         };
 
-        // 這裡請替換成你的四張圖片路徑
-        // 例如：
-        // form1: 'images/form1.jpg',
-        // form2: 'https://example.com/images/form2.png',
         const formImages = {
-            form1: 'https://i.imgur.com/your_image1.jpg', // 替換成你的表單一圖片連結
-            form2: 'https://i.imgur.com/your_image2.png', // 替換成你的表單二圖片連結
-            form3: 'https://i.imgur.com/your_image3.gif', // 替換成你的表單三圖片連結
-            form4: 'https://i.imgur.com/your_image4.jpg'  // 替換成你的表單四圖片連結
+            form1: 'https://i.imgur.com/your_image1.jpg',
+            form2: 'https://i.imgur.com/your_image2.png',
+            form3: 'https://i.imgur.com/your_image3.gif',
+            form4: 'https://i.imgur.com/your_image4.jpg'
         };
 
-        // 匯入資料
         async function fetchParticipants(url) {
+            if (!url) return;
             loadingMessage.textContent = '正在匯入名單...請稍候。';
+            updateBtn.disabled = true;
             startBtn.disabled = true;
             
             try {
@@ -111,10 +113,11 @@
             } catch (error) {
                 loadingMessage.textContent = '匯入失敗，請檢查網址、網路連線或表單設定。';
                 console.error('Error fetching data:', error);
+            } finally {
+                updateBtn.disabled = false;
             }
         }
 
-        // 更新介面上的參加者列表和計數
         function updateList() {
             participantsList.innerHTML = '';
             participants.forEach(name => {
@@ -125,7 +128,6 @@
             participantCountSpan.textContent = participants.length;
         }
 
-        // 開始抽籤
         function startDrawing() {
             resultsDiv.innerHTML = '';
             const numToDraw = parseInt(drawCountInput.value, 10);
@@ -161,32 +163,36 @@
             updateList();
         }
 
-        // 處理表單選擇按鈕的點擊事件
         sourceButtons.forEach(button => {
             button.addEventListener('click', (event) => {
                 sourceButtons.forEach(btn => btn.classList.remove('active'));
                 event.target.classList.add('active');
 
                 const sourceKey = event.target.dataset.source;
-                const selectedUrl = googleSheetUrls[sourceKey];
-                const imageUrl = formImages[sourceKey]; // 取得對應的圖片路徑
+                selectedUrl = googleSheetUrls[sourceKey];
+                const imageUrl = formImages[sourceKey];
 
-                // 更新圖片
                 if (imageUrl) {
                     formImageDisplay.src = imageUrl;
-                    formImageDisplay.style.display = 'block'; // 顯示圖片
+                    formImageDisplay.style.display = 'block';
                 } else {
                     formImageDisplay.src = '';
-                    formImageDisplay.style.display = 'none'; // 如果沒有圖片則隱藏
+                    formImageDisplay.style.display = 'none';
                 }
                 
-                fetchParticipants(selectedUrl);
+                updateBtn.disabled = false;
+                loadingMessage.textContent = '已選擇表單來源，請點擊「更新名單」匯入資料。';
+                participantCountSpan.textContent = '0';
+                participantsList.innerHTML = '';
             });
         });
 
+        updateBtn.addEventListener('click', () => {
+            fetchParticipants(selectedUrl);
+        });
+        
         startBtn.addEventListener('click', startDrawing);
 
-        // 初始載入時隱藏圖片
         document.addEventListener('DOMContentLoaded', () => {
             formImageDisplay.style.display = 'none';
         });
